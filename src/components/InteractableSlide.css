@@ -1,0 +1,20 @@
+.interactable-slide {
+  background-color: #f5f5dc; /* Light beige background */
+  border-radius: 15px; /* Rounded corners */
+  padding: 20px; /* Inner spacing */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  border: 2px solid #d4af37; /* Gold-like border */
+  max-width: 600px;
+  margin: 20px auto; /* Center alignment */
+  text-align: center; /* Center text */
+}
+
+.interactable-slide h1 {
+  font-size: 2rem;
+  color: #333; /* Dark text */
+}
+
+.interactable-slide p {
+  font-size: 1.2rem;
+  color: #555; /* Slightly lighter text */
+}
