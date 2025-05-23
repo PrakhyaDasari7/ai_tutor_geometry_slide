@@ -9,7 +9,7 @@ const mockData = [
         diagramDetails: "Circle with two radii forming a 60° angle.",
         diagramPath: "/diagrams/circle.svg",
         tutoringDialogues: [
-          { index: 1, text: "To find the length of arc AB, we use the formula: (θ/360) * 2πr." },
+          { index: 1, text: "To find the length of arc AB, we use the formula: θ by 360 times 2πr." },
           { index: 2, text: "Here, θ = 60° and r = 5 cm." },
           { index: 3, text: "Substitute the values to calculate the arc length." }
         ]
@@ -65,9 +65,9 @@ const mockData = [
         diagramDetails: "Triangle with labeled side lengths.",
         diagramPath: "/diagrams/triangle.svg",
         tutoringDialogues: [
-          { index: 1, text: "To check if the triangle is a right triangle, use the Pythagorean theorem: a² + b² = c²." },
-          { index: 2, text: "Here, a = 3 cm, b = 4 cm, and c = 5 cm." },
-          { index: 3, text: "Verify if the equation holds true." }
+          { index: 1, text: "To check if the triangle is a right triangle, use the Pythagorean theorem formula: a² + b² = c²." },
+          { index: 2, text: "Here, a = 3 cm, b = 4 cm, and c = 5 cm. 9+16=25" },
+          { index: 3, text: "Hence, we verified if the equation holds true." }
         ]
       },
       {

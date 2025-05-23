@@ -16,13 +16,32 @@ const Slide1 = ({ onStartSession }) => {
         <p>b) Find the perimeter of the rectangle.</p>
       </div>
 
-      <div id="diagramCanvas" className="flex justify-center">
+      <div id="diagramCanvas" className="flex justify-center items-center gap-6">
         <svg width="200" height="120" viewBox="0 0 200 120">
           <rect id="rectangle" data-role="interactable" data-label="rectangle" x="20" y="20" width="160" height="80" stroke="black" strokeWidth="2" fill="none" />
           <text x="100" y="15" textAnchor="middle" fontSize="12">Rectangle</text>
           <text id="length" data-role="interactable" x="100" y="110" textAnchor="middle" fontSize="12">Length: 10 cm</text>
           <text id="width" data-role="interactable" x="185" y="60" textAnchor="end" fontSize="12">Width: 6 cm</text>
         </svg>
+        <input
+          id="formulaBox"
+          type="text"
+          value="Area = length × width"
+          readOnly
+          style={{
+            width: '180px',
+            fontSize: '1.1em',
+            background: '#f3f3f3',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            padding: '8px',
+            color: '#222',
+            textAlign: 'center',
+            pointerEvents: 'none',
+            fontFamily: 'monospace',
+          }}
+          aria-label="Rectangle area formula"
+        />
       </div>
 
       <div id="workspace" className="mt-4">

@@ -16,13 +16,34 @@ const Slide1 = ({ onStartSession }) => {
         <p>b) What fraction of the circle’s circumference does arc AB represent?</p>
       </div>
 
-      <div id="diagramCanvas" className="flex justify-center">
+      <div id="diagramCanvas" className="flex justify-center items-center gap-6">
         <svg width="200" height="200" viewBox="0 0 200 200">
           <circle cx="100" cy="100" r="80" stroke="black" strokeWidth="2" fill="none" />
-          <line id="lineOA" data-role="interactable" data-type="shape" x1="100" y1="100" x2="180" y2="100" stroke="blue" strokeWidth="2" />
-          <line id="lineOB" data-role="interactable" data-type="shape" x1="100" y1="100" x2="140" y2="40" stroke="blue" strokeWidth="2" />
-          <path id="arcab" data-label="arcab" data-role="interactable" data-type="shape" d="M180,100 A80,80 0 0,0 140,40" stroke="red" strokeWidth="2" fill="none" />
+          <line id="lineOA" data-role="interactable" data-type="shape" x1="100" y1="100" x2="180" y2="100" stroke="black" strokeWidth="2" />
+          <line id="lineOB" data-role="interactable" data-type="shape" x1="100" y1="100" x2="140" y2="40" stroke="black" strokeWidth="2" />
+          <path id="arcab" data-label="arcab" data-role="interactable" data-type="shape" d="M180,100 A80,80 0 0,0 140,40" stroke="black" strokeWidth="2" fill="none" />
+          <text x="112" y="97" fontSize="18" fill="black" fontWeight="bold">)θ°</text>
+          <text x="120" y="112" fontSize="13" fill="black" fontWeight="bold">radius=r</text>
         </svg>
+        <input
+          id="formulaBox"
+          type="text"
+          value="(θ°/360) × 2πr"
+          readOnly
+          style={{
+            width: '160px',
+            fontSize: '1.1em',
+            background: '#f3f3f3',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            padding: '8px',
+            color: '#222',
+            textAlign: 'center',
+            pointerEvents: 'none',
+            fontFamily: 'monospace',
+          }}
+          aria-label="Arc length formula"
+        />
       </div>
 
       <div id="workspace" className="mt-4">

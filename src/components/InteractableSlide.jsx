@@ -9,6 +9,8 @@ import mockData from '../mockData';
 const InteractableSlide = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [socket, setSocket] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -83,15 +85,16 @@ const InteractableSlide = () => {
         if (msg.type === 'tutor_action' && msg.action) {
           const container = containerRef.current;
           if (!container) return;
-          // Scope pointer logic to SVG diagram only
           let svg = container.querySelector('#diagramCanvas svg');
-          const target = (msg.action.type === 'POINT' && svg)
-            ? (msg.action.id
-                ? svg.querySelector(`#${msg.action.id}`)
-                : null)
-            : (msg.action.id
-                ? container.querySelector(`#${msg.action.id}`)
-                : null);
+          let target = null;
+          // Robustly match formula keyword/id for pointer
+          if (msg.action.type === 'POINT' && msg.action.id && msg.action.id.toLowerCase().includes('formula')) {
+            target = container.querySelector('#formulaBox');
+          } else if (msg.action.type === 'POINT' && svg) {
+            target = msg.action.id ? svg.querySelector(`#${msg.action.id}`) : null;
+          } else if (msg.action.id) {
+            target = container.querySelector(`#${msg.action.id}`);
+          }
           if (target) {
             if (msg.action.type === 'highlight') {
               target.style.transition = 'background 0.3s';
@@ -147,32 +150,21 @@ const InteractableSlide = () => {
       const container = containerRef.current;
       if (container && dialog && dialog.subQuestions && dialog.subQuestions[0] && dialog.subQuestions[0].tutoringDialogues) {
         const firstDialogue = dialog.subQuestions[0].tutoringDialogues[0]?.text || '';
-        // Try to extract a keyword (e.g., 'arcab', 'lineoa', 'lineob', etc.)
-        let keyword = null;
-        if (/arc AB/i.test(firstDialogue)) {
-          keyword = 'arcab';
-        } else if (/OA/i.test(firstDialogue)) {
-          keyword = 'lineoa';
-        } else if (/OB/i.test(firstDialogue)) {
-          keyword = 'lineob';
-        } else {
-          const keywordMatch = firstDialogue.match(/rectangle|triangle|sideA|sideB|sideC|length|width|radius|angle|circle|[A-Z]{2,}/i);
-          keyword = keywordMatch ? keywordMatch[0].toLowerCase().replace(/\s/g, '') : null;
-        }
-        let target = null;
-        // Only search inside SVG diagram
+        // Determine which diagram element to point to for each question
+        let mainTarget = null;
         const svg = container.querySelector('#diagramCanvas svg');
-        if (svg && keyword) {
-          target = svg.querySelector(`#${keyword}`);
-          if (!target) {
-            target = svg.querySelector(`[data-label='${keyword}'], [data-name='${keyword}'], [data-keyword='${keyword}']`);
+        if (svg) {
+          if (svg.querySelector('#arcab')) {
+            mainTarget = svg.querySelector('#arcab'); // Question 1
+          } else if (svg.querySelector('#rectangle')) {
+            mainTarget = svg.querySelector('#rectangle'); // Question 2
+          } else if (svg.querySelector('#triangle')) {
+            mainTarget = svg.querySelector('#triangle'); // Question 3
+          } else if (svg.querySelector('#square')) {
+            mainTarget = svg.querySelector('#square'); // Question 4
           }
         }
-        // Fallback: first interactable in SVG
-        if (!target && svg) {
-          target = svg.querySelector('[data-role="interactable"], [id]');
-        }
-        if (target) {
+        if (mainTarget) {
           let cursor = document.getElementById('tutor-cursor-overlay');
           if (!cursor) {
             cursor = document.createElement('div');
@@ -191,10 +183,40 @@ const InteractableSlide = () => {
             cursor.innerHTML = '<span style="color:white;font-size:22px;">👆</span>';
             document.body.appendChild(cursor);
           }
-          const rect = target.getBoundingClientRect();
+          const rect = mainTarget.getBoundingClientRect();
           cursor.style.left = `${rect.left + rect.width / 2 - 16}px`;
           cursor.style.top = `${rect.top + rect.height / 2 - 16}px`;
           cursor.style.display = 'flex';
+        }
+        // If the first dialogue mentions formula, move pointer to formula after a short delay
+        if (/formula/i.test(firstDialogue)) {
+          setTimeout(() => {
+            const formulaBox = container.querySelector('#formulaBox');
+            if (formulaBox) {
+              let cursor = document.getElementById('tutor-cursor-overlay');
+              if (!cursor) {
+                cursor = document.createElement('div');
+                cursor.id = 'tutor-cursor-overlay';
+                cursor.style.position = 'fixed';
+                cursor.style.width = '32px';
+                cursor.style.height = '32px';
+                cursor.style.background = 'rgba(0,0,0,0.7)';
+                cursor.style.borderRadius = '50%';
+                cursor.style.zIndex = 9999;
+                cursor.style.pointerEvents = 'none';
+                cursor.style.display = 'flex';
+                cursor.style.alignItems = 'center';
+                cursor.style.justifyContent = 'center';
+                cursor.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                cursor.innerHTML = '<span style="color:white;font-size:22px;">👆</span>';
+                document.body.appendChild(cursor);
+              }
+              const rect = formulaBox.getBoundingClientRect();
+              cursor.style.left = `${rect.left + rect.width / 2 - 16}px`;
+              cursor.style.top = `${rect.top + rect.height / 2 - 16}px`;
+              cursor.style.display = 'flex';
+            }
+          }, 1200); // 1.2s delay for effect
         }
       }
     } else {
@@ -212,6 +234,60 @@ const InteractableSlide = () => {
   const handleNextSlide = () => {
     setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
   };
+
+  // Speech recognition setup
+  useEffect(() => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = false;
+    recognitionRef.current.interimResults = false;
+    recognitionRef.current.lang = 'en-US';
+  }, []);
+
+  // Attach mic button handler after slide render
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const micBtn = container.querySelector('#btnMic');
+    if (!micBtn) return;
+    let isMounted = true;
+    let transcript = '';
+    const handleMicClick = () => {
+      if (!recognitionRef.current) return;
+      if (!isRecording) {
+        // Start recording
+        setIsRecording(true);
+        recognitionRef.current.start();
+        micBtn.textContent = '⏹️ Stop';
+        recognitionRef.current.onresult = (event) => {
+          transcript = event.results[0][0].transcript;
+          if (isMounted) {
+            console.log('User speech:', transcript);
+          }
+        };
+        recognitionRef.current.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+        };
+      } else {
+        // Stop recording
+        setIsRecording(false);
+        recognitionRef.current.stop();
+        micBtn.textContent = '🎤 Record';
+        // After a short delay, send SPEECH to backend to play next dialogue
+        setTimeout(() => {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'SPEECH', transcript }));
+          }
+        }, 400);
+      }
+    };
+    micBtn.addEventListener('click', handleMicClick);
+    return () => {
+      isMounted = false;
+      micBtn.removeEventListener('click', handleMicClick);
+    };
+  }, [currentSlide, socket, isRecording]);
 
   return (
     <div className="interactable-slide" ref={containerRef}>

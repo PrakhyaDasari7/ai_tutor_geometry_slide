@@ -15,7 +15,7 @@ const Slide1 = ({ onStartSession }) => {
         <p>b) Find the area of the triangle.</p>
       </div>
 
-      <div id="diagramCanvas" className="flex justify-center">
+      <div id="diagramCanvas" className="flex justify-center items-center gap-6">
         <svg width="200" height="120" viewBox="0 0 200 120">
           <rect id="triangle-shape" data-role="interactable" data-label="triangle" x="30" y="80" width="140" height="2" fill="black" />
           <polygon id="triangle" data-role="interactable" data-label="triangle" points="30,80 170,80 100,20" stroke="black" strokeWidth="2" fill="none" />
@@ -23,6 +23,25 @@ const Slide1 = ({ onStartSession }) => {
           <text id="sideB" data-role="interactable" x="140" y="95" fontSize="12">4 cm</text>
           <text id="sideC" data-role="interactable" x="105" y="40" fontSize="12">5 cm</text>
         </svg>
+        <input
+          id="formulaBox"
+          type="text"
+          value="a² + b² = c²"
+          readOnly
+          style={{
+            width: '200px',
+            fontSize: '1.1em',
+            background: '#f3f3f3',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            padding: '8px',
+            color: '#222',
+            textAlign: 'center',
+            pointerEvents: 'none',
+            fontFamily: 'monospace',
+          }}
+          aria-label="Triangle area formula"
+        />
       </div>
 
       <div id="workspace" className="mt-4">
