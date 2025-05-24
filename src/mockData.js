@@ -11,7 +11,8 @@ const mockData = [
         tutoringDialogues: [
           { index: 1, text: "To find the length of arc AB, we use the formula: θ by 360 times 2πr." },
           { index: 2, text: "Here, θ = 60° and r = 5 cm." },
-          { index: 3, text: "Substitute the values to calculate the arc length." }
+          { index: 3, text: "Substitute the values to calculate the arc length." },
+        
         ]
       },
       {

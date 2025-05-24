@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './InteractableSlide.css';
 import Question1 from './QuestionComponents/Question1';
 import Question2 from './QuestionComponents/Question2';
@@ -7,9 +7,13 @@ import Question4 from './QuestionComponents/Question4';
 import useWebSocket from './useWebSocket';
 import useSpeechRecognition from './useSpeechRecognition';
 import { handleTutorAction } from './tutorActions';
+import { useStore, actionTypes } from '../store';
+import mockData from '../mockData';
 
 const InteractableSlide = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  // Use global state for currentSlide and dialog
+  const { state, dispatch } = useStore();
+  const currentSlide = state.currentSlide ?? 0; // fallback to 0 if null
   const containerRef = useRef(null);
 
   // WebSocket logic moved to custom hook
@@ -30,6 +34,14 @@ const InteractableSlide = () => {
       // Existing tutor_action handler
       if (msg.type === 'tutor_action' && msg.action) {
         handleTutorAction(msg.action, containerRef.current);
+      }
+      // Example: handle dialog message from backend
+      if (msg.type === 'dialog' && msg.payload) {
+        dispatch({ type: actionTypes.ADD_DIALOG, payload: msg.payload });
+      }
+      // Example: handle slide change from backend
+      if (msg.type === 'set_slide' && msg.payload) {
+        dispatch({ type: actionTypes.SET_SLIDE, payload: msg.payload });
       }
     } catch (e) {
       console.error('Failed to process tutor action or audio:', e);
@@ -107,6 +119,32 @@ const InteractableSlide = () => {
         if (socket && socket.readyState === WebSocket.OPEN) {
           sendMessage({ type: 'SPEECH', transcript: '' });
         }
+        // Check if all dialogues for current subpart are done
+        const question = mockData.find(q => q.questionIndex === currentSlide + 1);
+        const subpartIndex = state.currentSubpart || 0;
+        const subQuestions = question?.subQuestions || [];
+        const currentSub = subQuestions[subpartIndex];
+        const totalDialogues = currentSub?.tutoringDialogues?.length || 0;
+        if (state.dialog.length >= totalDialogues) {
+          // Move to next subpart if available
+          if (subpartIndex + 1 < subQuestions.length) {
+            // Prepare next subpart index and dialogues
+            const nextSubpartIndex = subpartIndex + 1;
+            const nextDialogues = subQuestions[nextSubpartIndex].tutoringDialogues.map(d => d.text);
+            // Update subpart index first
+            dispatch({ type: actionTypes.SET_SUBPART, payload: nextSubpartIndex });
+            // Wait for subpart index to update, then set dialog and trigger audio
+            setTimeout(() => {
+              dispatch({ type: actionTypes.SET_DIALOGS, payload: [nextDialogues[0]] });
+              // Wait for dialog state to update, then send SPEECH message to backend to trigger audio
+              setTimeout(() => {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                  sendMessage({ type: 'SPEECH', transcript: '' });
+                }
+              }, 100);
+            }, 100);
+          }
+        }
       }
     };
     micBtn.addEventListener('click', handleMicClick);
@@ -114,7 +152,7 @@ const InteractableSlide = () => {
       isMounted = false;
       micBtn.removeEventListener('click', handleMicClick);
     };
-  }, [currentSlide, socket, isRecording, startRecording, stopRecording, recognitionRef]);
+  }, [currentSlide, socket, isRecording, startRecording, stopRecording, recognitionRef, state.dialog, state.currentSubpart, dispatch]);
 
   const handleStartSession = (dialog) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -169,7 +207,8 @@ const InteractableSlide = () => {
   ];
 
   const handleNextSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
+    const nextSlide = (currentSlide + 1) % slides.length;
+    dispatch({ type: actionTypes.SET_SLIDE, payload: nextSlide });
   };
 
   return (
